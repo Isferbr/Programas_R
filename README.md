@@ -1,1 +1,1 @@
-# Programas_R
+# Programas implementados na Linguagem R.
