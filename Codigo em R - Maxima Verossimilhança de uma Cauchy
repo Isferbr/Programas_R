@@ -1,0 +1,76 @@
+curve(dnorm(x,mean=0),-5,5, col = "red",ylab = "",xlab = "")
+curve(dcauchy(x,location=0),-5,5,add=TRUE,col="grey",lwd=6)
+abline(v=0,col = "grey")
+abline(h=0, col = "grey", lty=2)
+text(3,0.3,"f.d.p. N(0,1) ",col="red")
+text(3,0.25,"Cauchy ",col="grey")
+
+#-------------------- Cauchy ----------------------------
+n=500; teta=0.5;
+x=rcauchy(n,location=teta);
+ti=array(0,dim=c(n,1))
+tti=array(0,dim=c(n,1))
+logL <- function(theta){
+  -sum(log(1+(x-theta)^2))
+}
+L <- function(theta){
+  1/prod((1+(x-theta)^2))
+}
+for (i in 1:n){
+  x=x[1:i]
+  # --------------- EMV por Log-verosimilhança --------------
+  ti[i]=optimize(logL,interval=c(-10,10),maximum=TRUE)$max
+  
+  # --------------- EMV por Verosimilhança --------------
+  tti[i]=optimize(L,interval=c(-10,10),maximum=TRUE)$max
+}
+par(mfrow=c(1,2))
+plot(ti,type="l",lwd=2,ylab=bquote(theta[n[i]]),xlab=bquote(n[i]))
+lines(tti,type="l",lwd=2,col="sienna")
+abline(h=0.5,col="grey")
+
+# --------------- Log-Verosimilhança --------------
+theta=seq(-10,10,.1)
+logL=array(0,dim=c(length(teta),1))
+for(i in 1:length(teta)){
+  logL[i]=-sum(log(1+(x-theta[i])^2))
+}
+plot(theta,type="l",lwd=2,ylab=bquote(logL(theta)),xlab=bquote(theta))
+#dados de uma Cauchy(teta,1). Objectivo estimar teta
+x<-c(1.77,-0.23,2.76,3.80, 3.47, 56.75, -1.34, 4.24, -2.44,
+     3.29,3.71, -2.40, 4.53, -0.07, -1.05, -13.87, -2.53, -1.75, 0.27, 43.21)
+n<-length(x)
+
+# logaritmo da verosimilhança;
+log_lik<-function(teta) sum(dcauchy(x,location=teta,scale=1,log=T))
+
+# gráfico do logaritmo da verosimilhança
+xteta<-seq(min(x)-2,max(x)+2,0.1) # sequência de valores de teta
+y<-sapply(xteta,log_lik) # valores de Log-L(theta) em xteta
+plot(xteta,y,"l",col="red",xlab=bquote(theta),ylab=bquote(LogL(theta)))
+abline(h=max(y),lty=2)
+abline(v=c(-15,0,3,43,56), col="grey")
+
+# EMV --- método de Newton-Raphson (NR)
+library(maxLik)
+inits<-c(-15,0,3,43,56) #valores iniciais sugeridos pelo plot
+cauest<-function(init) maxNR(log_lik,start=init) # estimativa de mv com NR
+out<-sapply(inits,cauest) #aplica a função anterior aos valores iniciais especificados em inits
+#out
+out[2,] #dá as estimativas usando os 5 valores iniciais
+cauest(mean(x))$estimate #caso se use a média
+# NOTA: a Cauchy não tem valor médio
+abline(v=cauest(mean(x))$estimate,lty=2,col=3)
+#####
+
+# --------- atenção vários vários máximos locais -------#
+# vejam-se as raízes da derivada da função log-verosimilhança
+# derivada da log-verosimilhança
+dercau<-function(teta) sum((x-teta)/(1+(x-teta)^2))
+# ---------- gráfico da derivada ---------- #
+plot(xteta,sapply(xteta,dercau),col="blue","l",
+     xlab=bquote(theta),ylab=bquote(dLogL(theta)))
+abline(h=0,lty=2)
+################
+
+
